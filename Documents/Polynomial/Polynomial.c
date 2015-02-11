@@ -89,7 +89,19 @@ bool Polynomial_Equals(const Polynomial* const Left, const Polynomial* const Rig
  */
 int32_t Polynomial_EvaluateAt(const Polynomial* const P, const int32_t X)
 {
-	
+	int sum = 0;
+	if (P->Degree < 1)
+	{
+		return 0;
+	}
+	else
+	{
+		for (int i = 0; i < P->Degree; i++)
+		{
+			sum += pow(P->Coeff[i] * X, i);
+		}
+	}
+	return sum;
 }
 
 /**
@@ -104,7 +116,10 @@ int32_t Polynomial_EvaluateAt(const Polynomial* const P, const int32_t X)
  *          Scaled->Coeff[i] == K * Source->Coeff[i] for i = 0:Scaled->Degree
  * Returns: false if *Scaled cannot be correctly initialized, true otherwise
  */
-bool Polynomial_Scale(Polynomial* const Scaled, const Polynomial* const Source, const int32_t K);
+bool Polynomial_Scale(Polynomial* const Scaled, const Polynomial* const Source, const int32_t K)
+{
+	
+}
 
 /**
  * Initializes *Sum to equal *Left + *Right.
@@ -175,6 +190,8 @@ bool Polynomial_Differentiate(Polynomial* const Target, const Polynomial* const 
  * Post: P->Degree == 0
  *       P->Coeff is set appropriately
  */
-bool Polynomial_Zero(Polynomial* const P);
+bool Polynomial_Zero(Polynomial* const P)
+{
 
-#endif /* POLYNOMIAL_H_ */
+}
+
