@@ -8,8 +8,11 @@
  *    2.  P.Coeff[k] is the coefficient of x^k , for k = 0 to P.Degree.
  */
 
-#include "Polynomail.h"
+#include "Polynomial.h"
 #include <stdlib.h>
+#include <math.h>
+
+void cleanUp(Polynomial* const Target);
 
 /**
  * Initializes *P as described below.
@@ -32,7 +35,7 @@ bool Polynomial_Set(Polynomial* const P, const uint8_t D, const int32_t* const C
 	else
 	{
 		P->Degree = D;
-		P->Coeff = malloc((D + 1) * sizeof(int(32_t)));
+		P->Coeff = malloc((D + 1) * sizeof(int32_t));
 		
 		for (int i = 0; i <= D; i++)
 		{
@@ -90,17 +93,11 @@ bool Polynomial_Equals(const Polynomial* const Left, const Polynomial* const Rig
 int32_t Polynomial_EvaluateAt(const Polynomial* const P, const int32_t X)
 {
 	int sum = 0;
-	if (P->Degree < 1)
-	{
-		return 0;
-	}
-	else
-	{
-		for (int i = 0; i < P->Degree; i++)
+		for (int i = 0; i <= P->Degree; i++)
 		{
-			sum += pow(P->Coeff[i] * X, i);
+			
+			sum += P->Coeff[i] * (X * i);
 		}
-	}
 	return sum;
 }
 
@@ -118,7 +115,16 @@ int32_t Polynomial_EvaluateAt(const Polynomial* const P, const int32_t X)
  */
 bool Polynomial_Scale(Polynomial* const Scaled, const Polynomial* const Source, const int32_t K)
 {
-	
+	bool init = Polynomial_Set(Scaled, Source->Degree, Source->Coeff);
+	if (init)
+	{
+		for (int i = 0; i <= Scaled->Degree; i++)
+		{
+			Scaled->Coeff[i] = Source->Coeff[i] * K;
+		}
+		return true;
+	}
+	return false;
 }
 
 /**
@@ -136,7 +142,48 @@ bool Polynomial_Scale(Polynomial* const Scaled, const Polynomial* const Source, 
  *             Left->Degree != Right->Degree
  * Returns: false if *Sum cannot be correctly initialized, true otherwise
  */
-bool Polynomial_Add(Polynomial* const Sum, const Polynomial* const Left, const Polynomial* const Right);
+bool Polynomial_Add(Polynomial* const Sum, const Polynomial* const Left, const Polynomial* const Right)
+{
+	int lMax = Left->Degree;
+	int rMax = Right->Degree;
+	bool init = false;
+	if (lMax >= rMax)
+	{
+		init = Polynomial_Set(Sum, Left->Degree, Left->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Right->Degree; i++)
+			{
+				Sum->Coeff[i] = Left->Coeff[i] + Right->Coeff[i];
+			}
+			cleanUp(Sum);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		init = Polynomial_Set(Sum, Right->Degree, Right->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Left->Degree; i++)
+			{
+				Sum->Coeff[i] = Left->Coeff[i] + Right->Coeff[i];
+			}
+			cleanUp(Sum);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+}
+
 
 /**
  * Initializes *Diff to equal *Left - *Right.
@@ -153,7 +200,64 @@ bool Polynomial_Add(Polynomial* const Sum, const Polynomial* const Left, const P
  *             Left->Degree != Right->Degree
  * Returns: false if *Diff cannot be correctly initialized, true otherwise
  */
-bool Polynomial_Subtract(Polynomial* const Diff, const Polynomial* const Left, const Polynomial* const Right);
+bool Polynomial_Subtract(Polynomial* const Diff, const Polynomial* const Left, const Polynomial* const Right)
+{
+	int lMax = Left->Degree;
+	int rMax = Right->Degree;
+	bool init = false;
+	if (lMax >= rMax)
+	{
+		init = Polynomial_Set(Diff, Left->Degree, Left->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Right->Degree; i++)
+			{
+				Diff->Coeff[i] = Left->Coeff[i] - Right->Coeff[i];
+			}
+			cleanUp(Diff);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		init = Polynomial_Set(Diff, Right->Degree, Right->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Left->Degree; i++)
+			{
+				Diff->Coeff[i] = Left->Coeff[i] - Right->Coeff[i];
+			}
+			cleanUp(Diff);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+void cleanUp(Polynomial* const Target)
+{
+	int count = 0;
+	for (int i = 0; i <= Target->Degree; i++)
+	{
+		if (Target->Coeff[i] == 0)
+		{
+			count++;
+			for (int j = i; j < Target->Degree; j++)
+			{
+				Target->Coeff[j] = Target->Coeff[j + 1];
+			}
+			Target->Degree--;
+		}
+	}
+	Target->Coeff = realloc(Target->Coeff, Target->Degree * sizeof(int32_t));
+}
 
 /**
  * Initializes *Diff to equal *Left - *Right.
@@ -168,7 +272,44 @@ bool Polynomial_Subtract(Polynomial* const Diff, const Polynomial* const Left, c
  *          Prod->Coeff[i] == correct coefficient of x^i in Left * Right
  * Returns: false if *Prod cannot be correctly initialized, true otherwise
  */
-bool Polynomial_Multiply(Polynomial* const Prod, const Polynomial* const Left, const Polynomial* const Right);
+bool Polynomial_Multiply(Polynomial* const Prod, const Polynomial* const Left, const Polynomial* const Right)
+{
+	int lMax = Left->Degree;
+	int rMax = Right->Degree;
+	bool init = false;
+	if (lMax >= rMax)
+	{
+		init = Polynomial_Set(Prod, Left->Degree, Left->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Right->Degree; i++)
+			{
+				Prod->Coeff[i] = Left->Coeff[i] * Right->Coeff[i];
+			}
+			
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		init = Polynomial_Set(Prod, Right->Degree, Right->Coeff);
+		if (init)
+		{
+			for (int i = 0; i <= Left->Degree; i++)
+			{
+				Prod->Coeff[i] = Left->Coeff[i] * Right->Coeff[i];
+			}
+			
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
 
 /**
  * Computes the first derivative of Source.
@@ -181,7 +322,19 @@ bool Polynomial_Multiply(Polynomial* const Prod, const Polynomial* const Left, c
  *
  * Returns: false if Source' cannot be correctly initialized, true otherwise
  */
-bool Polynomial_Differentiate(Polynomial* const Target, const Polynomial* const Source);
+bool Polynomial_Differentiate(Polynomial* const Target, const Polynomial* const Source)
+{
+	bool init = Polynomial_Set(Target, Source->Degree, Source->Coeff);
+	if (init)
+	{		
+		for (int i = 0; i <= Target->Degree; i++)
+		{
+			Target->Coeff[i] = Target->Coeff[i] * i;
+		}
+		Target->Coeff = realloc(Target->Coeff, Target->Degree * sizeof(int32_t));
+		return true;
+	}
+}
 
 /**
  * Reset P to represent zero polynomial.
@@ -192,6 +345,9 @@ bool Polynomial_Differentiate(Polynomial* const Target, const Polynomial* const 
  */
 bool Polynomial_Zero(Polynomial* const P)
 {
-
+	P->Degree = 0;
+	P->Coeff = realloc(P->Coeff, sizeof(int32_t));
+	P->Coeff[0] = 0;
+	return true;
 }
 
